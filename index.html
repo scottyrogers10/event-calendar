@@ -1,0 +1,282 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Scheduler</title>
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            font-family: Arial;
+            color: rgba(0,0,0,0.8);
+        }
+    </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <script type="components/config" src="../../components/components.json" root="../../components/">
+    </script>
+
+</head>
+
+<body>
+    <div class="absolute-fill-parent" component="gem-window-manager">
+        <div id="scheduler" component="gem-scheduler" style="width:100%;height:100%;min-width:500px;position:relative;overflow:hidden;"></div>
+    </div>
+    <style component="css-helpers"></style>
+    <script src="../../lib/BASE/BASE.js"></script>
+    <script>
+        BASE.require.loader.setRoot("../../lib/BASE");
+        BASE.require.loader.setNamespace("components", "../../components");
+        BASE.require.loader.setNamespace("app", "app");
+        BASE.require.loader.setNamespace("lg", "../../lg");
+
+        BASE.require([
+            "jQuery",
+            "BASE.web.ComponentsDocument",
+            "BASE.data.Edm",
+            "BASE.data.databases.Sqlite",
+            "BASE.data.services.SqliteService",
+            "BASE.data.DataContext",
+            "components.gem.DefaultDisplayService"
+        ], function () {
+
+            window.Meeting = function () {
+                this.id = null;
+                this.name = null;
+                this.startDate = null;
+                this.endDate = null;
+            };
+
+            window.Screening = function () {
+                this.id = null;
+                this.name = null;
+                this.startDate = null;
+                this.endDate = null;
+            };
+
+            window.Reservation = function () {
+                this.id = null;
+                this.name = null;
+                this.startDate = null;
+                this.endDate = null;
+            };
+
+            window.Personal = function () {
+                this.id = null;
+                this.name = null;
+                this.startDate = null;
+                this.endDate = null;
+            };
+
+            window.Appointment = function () {
+                this.id = null;
+                this.name = null;
+                this.startDate = null;
+                this.endDate = null;
+            };
+
+            var edm = new BASE.data.Edm();
+
+            edm.addModel({
+                type: Meeting,
+                collectionName: "meetings",
+                labelInstance: function () {
+                    return "Meeting";
+                },
+                displayInstance: function (entity) {
+                    return entity.name || "(Unknown)";
+                },
+                properties: {
+                    id: {
+                        type: Integer,
+                        primaryKey: true,
+                        autoIncrement: true
+                    },
+                    startDate: {
+                        type: DateTimeOffset
+                    },
+                    endDate: {
+                        type: DateTimeOffset
+                    },
+                    name: {
+                        type: String
+                    }
+                }
+            });
+
+            edm.addModel({
+                type: Screening,
+                collectionName: "screenings",
+                labelInstance: function () {
+                    return "Screening";
+                },
+                displayInstance: function (entity) {
+                    return entity.name || "(Unknown)";
+                },
+                properties: {
+                    id: {
+                        type: Integer,
+                        primaryKey: true,
+                        autoIncrement: true
+                    },
+                    startDate: {
+                        type: DateTimeOffset
+                    },
+                    endDate: {
+                        type: DateTimeOffset
+                    },
+                    name: {
+                        type: String
+                    }
+                }
+            });
+
+            edm.addModel({
+                type: Reservation,
+                collectionName: "reservations",
+                displayInstance: function (entity) {
+                    return entity.name || "(Unknown)";
+                },
+                labelInstance: function () {
+                    return "Reservation";
+                },
+                properties: {
+                    id: {
+                        type: Integer,
+                        primaryKey: true,
+                        autoIncrement: true
+                    },
+                    startDate: {
+                        type: DateTimeOffset
+                    },
+                    endDate: {
+                        type: DateTimeOffset
+                    },
+                    name: {
+                        type: String
+                    }
+                }
+            });
+
+            edm.addModel({
+                type: Personal,
+                collectionName: "personals",
+                displayInstance: function (entity) {
+                    return entity.name || "(Unknown)";
+                },
+                labelInstance: function () {
+                    return "Personal";
+                },
+                properties: {
+                    id: {
+                        type: Integer,
+                        primaryKey: true,
+                        autoIncrement: true
+                    },
+                    startDate: {
+                        type: DateTimeOffset
+                    },
+                    endDate: {
+                        type: DateTimeOffset
+                    },
+                    name: {
+                        type: String
+                    }
+                }
+            });
+
+            edm.addModel({
+                type: Appointment,
+                collectionName: "appointments",
+                displayInstance: function (entity) {
+                    return entity.name || "(Unknown)";
+                },
+                labelInstance: function () {
+                    return "Appointment";
+                },
+                properties: {
+                    id: {
+                        type: Integer,
+                        primaryKey: true,
+                        autoIncrement: true
+                    },
+                    startDate: {
+                        type: DateTimeOffset
+                    },
+                    endDate: {
+                        type: DateTimeOffset
+                    },
+                    name: {
+                        type: String
+                    }
+                }
+            });
+
+            var service = new BASE.data.services.SqliteService(new BASE.data.databases.Sqlite({
+                name: "scheduler",
+                edm: edm
+            }));
+
+            window.dataContext = new BASE.data.DataContext(service);
+
+            var displayService = new components.gem.DefaultDisplayService(service);
+
+            $(function () {
+                var ComponentsDocument = BASE.web.ComponentsDocument;
+
+                BASE.web.components = new ComponentsDocument(document, {});
+
+                $(document).on("componentsReady", function () {
+                    var scheduler = $("#scheduler").controller();
+
+                    scheduler.registerType({
+                        Type: Meeting,
+                        displayService: displayService,
+                        startPropertyName: "startDate",
+                        endPropertyName: "endDate",
+                        color: "rgb(67, 159, 116)"
+                    });
+
+                    scheduler.registerType({
+                        Type: Screening,
+                        displayService: displayService,
+                        startPropertyName: "startDate",
+                        endPropertyName: "endDate",
+                        color: "#ff9800"
+                    });
+
+                    scheduler.registerType({
+                        Type: Reservation,
+                        displayService: displayService,
+                        startPropertyName: "startDate",
+                        endPropertyName: "endDate",
+                        color: "#1966af"
+                    });
+
+                    scheduler.registerType({
+                        Type: Personal,
+                        displayService: displayService,
+                        startPropertyName: "startDate",
+                        endPropertyName: "endDate",
+                        color: "#795548"
+                    });
+
+                    scheduler.registerType({
+                        Type: Appointment,
+                        displayService: displayService,
+                        startPropertyName: "startDate",
+                        endPropertyName: "endDate",
+                        color: "#f44336"
+                    });
+
+
+                });
+            });
+        });
+    </script>
+</body>
+</html>
